@@ -163,15 +163,119 @@ input:focus {
   border-radius: 8px;
 }
 
+.dashboard-card button {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text);
+  padding: 10px 12px;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 250px;
   gap: 16px;
 }
 
+.calendar-card {
+  grid-column: 1 / -1;
+}
+
+.card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.card-heading p,
+.form-note {
+  color: var(--muted);
+}
+
+.month-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.weekday-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.weekday-grid span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.calendar-day {
+  min-height: 88px;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  overflow: hidden;
+}
+
+.calendar-blank {
+  min-height: 88px;
+  border: 1px solid transparent;
+}
+
+.calendar-day span,
+.calendar-day small {
+  color: var(--muted);
+}
+
+.calendar-task-preview,
+.calendar-more-count {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-task-preview {
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.calendar-more-count {
+  font-size: 0.78rem;
+}
+
+.calendar-day strong {
+  font-size: 1.45rem;
+}
+
+.selected-day {
+  border-color: var(--green);
+  background: #eef7f1;
+}
+
+.outside-month {
+  background: #f2f4f1;
+}
+
+.outside-month strong,
+.outside-month small {
+  color: #9aa3a0;
+}
+
 .task-form {
   display: grid;
   gap: 12px;
+  margin-top: 12px;
 }
 
 .task-list {
@@ -210,6 +314,25 @@ input:focus {
 @media (max-width: 800px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .card-heading,
+  .month-buttons {
+    flex-direction: column;
+  }
+
+  .calendar-grid,
+  .weekday-grid {
+    gap: 4px;
+  }
+
+  .calendar-day,
+  .calendar-blank {
+    min-height: 64px;
+  }
+
+  .calendar-day {
+    padding: 8px 6px;
   }
 }
 

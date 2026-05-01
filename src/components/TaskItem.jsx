@@ -13,10 +13,11 @@ function TaskItem({ task, onToggle, onDelete }) {
         </span>
       </label>
 
-          {task.dueDate && <small>Due: {task.dueDate}</small>}
-          
-          <button type = "button" onClick={() => onDelete(task.id)}>Delete</button>
-      
+      {task.dueDate && <small>Due: {task.dueDate}</small>}
+
+      <button type="button" onClick={() => onDelete(task.id)}>
+        Delete
+      </button>
     </li>
   );
 }

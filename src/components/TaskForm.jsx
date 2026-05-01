@@ -1,31 +1,22 @@
 function TaskForm({
   taskText,
   setTaskText,
-  dueDate,
-  setDueDate,
   onAddTask,
+  selectedDate,
 }) {
   return (
     <section className="dashboard-card">
       <h2>Add Task</h2>
+      <p className="form-note">New tasks will be added to {selectedDate}.</p>
 
       <form className="task-form" onSubmit={onAddTask}>
         <label>
           Task
           <input
             type="text"
-            placeholder="Example: Study SQL joins"
+            placeholder="Example: Your task here..."
             value={taskText}
             onChange={(event) => setTaskText(event.target.value)}
-          />
-        </label>
-
-        <label>
-          Due Date
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(event) => setDueDate(event.target.value)}
           />
         </label>
 
