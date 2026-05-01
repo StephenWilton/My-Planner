@@ -236,11 +236,6 @@ select:focus {
   overflow: hidden;
 }
 
-.calendar-blank {
-  min-height: 88px;
-  border: 1px solid transparent;
-}
-
 .calendar-day span,
 .calendar-day small {
   color: var(--muted);
@@ -324,6 +319,11 @@ select:focus {
   min-height: auto;
 }
 
+.task-edit-form {
+  display: grid;
+  gap: 8px;
+}
+
 .task-list small {
   display: block;
   margin-top: 4px;
@@ -350,8 +350,7 @@ select:focus {
     gap: 4px;
   }
 
-  .calendar-day,
-  .calendar-blank {
+  .calendar-day {
     min-height: 64px;
   }
 

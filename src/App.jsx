@@ -3,6 +3,8 @@ import TaskForm from "./components/TaskForm";
 import TaskItem from "./components/TaskItem";
 import "./App.css";
 
+const API_URL = "http://localhost:4000";
+
 function getCalendarDays(date) {
   const year = date.getFullYear();
   const month = date.getMonth();
@@ -125,6 +127,7 @@ function App() {
 
   const calendarDates = getCalendarDays(currentMonth);
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const isSavedUser = user && user.id !== "guest";
 
   function handlePreviousMonth() {
     setCurrentMonth(
@@ -142,7 +145,7 @@ function App() {
     setAuthMessage("");
 
     try {
-      const response = await fetch(`http://localhost:4000${path}`, {
+      const response = await fetch(`${API_URL}${path}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -157,6 +160,7 @@ function App() {
       }
 
       setUser(data.user);
+      await loadTasks(data.user.id);
       setAuthMessage(data.message);
       setScreen("dashboard");
     } catch {
@@ -185,7 +189,23 @@ function App() {
     setScreen("login");
   }
 
-  function handleAddTask(event) {
+  async function loadTasks(userId) {
+    try {
+      const response = await fetch(`${API_URL}/api/tasks?userId=${userId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAuthMessage(data.message);
+        return;
+      }
+
+      setTasks(data.tasks);
+    } catch {
+      setAuthMessage("Could not load tasks from the server.");
+    }
+  }
+
+  async function handleAddTask(event) {
     event.preventDefault();
 
     if (taskText.trim() === "") {
@@ -200,12 +220,43 @@ function App() {
       completedDates: [],
     };
 
-    setTasks([...tasks, newTask]);
-    setTaskText("");
-    setRepeatOption("none");
+    if (!isSavedUser) {
+      setTasks([...tasks, newTask]);
+      setTaskText("");
+      setRepeatOption("none");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          text: newTask.text,
+          dueDate: newTask.dueDate,
+          repeatOption: newTask.repeatOption,
+          completedDates: newTask.completedDates,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAuthMessage(data.message);
+        return;
+      }
+
+      setTasks([...tasks, data.task]);
+      setTaskText("");
+      setRepeatOption("none");
+    } catch {
+      setAuthMessage("Could not save the task.");
+    }
   }
 
-  function handleToggleTask(taskId, date) {
+  async function handleToggleTask(taskId, date) {
     const updatedTasks = tasks.map((task) => {
       if (task.id !== taskId) {
         return task;
@@ -222,11 +273,107 @@ function App() {
     });
 
     setTasks(updatedTasks);
+
+    if (!isSavedUser) {
+      return;
+    }
+
+    const updatedTask = updatedTasks.find((task) => task.id === taskId);
+
+    try {
+      const response = await fetch(`${API_URL}/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          completedDates: updatedTask.completedDates,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAuthMessage(data.message);
+      }
+    } catch {
+      setAuthMessage("Could not update the task.");
+    }
   }
 
-  function handleDeleteTask(taskId) {
+  async function handleEditTask(taskId, nextText) {
+    const trimmedText = nextText.trim();
+
+    if (!trimmedText) {
+      setAuthMessage("Task text is required.");
+      return false;
+    }
+
+    const updatedTasks = tasks.map((task) => {
+      if (task.id === taskId) {
+        return { ...task, text: trimmedText };
+      }
+
+      return task;
+    });
+
+    setTasks(updatedTasks);
+
+    if (!isSavedUser) {
+      return true;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          text: trimmedText,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAuthMessage(data.message);
+        return false;
+      }
+
+      setTasks(
+        updatedTasks.map((task) => (task.id === taskId ? data.task : task))
+      );
+      return true;
+    } catch {
+      setAuthMessage("Could not edit the task.");
+      return false;
+    }
+  }
+
+  async function handleDeleteTask(taskId) {
     const updatedTasks = tasks.filter((task) => task.id !== taskId);
     setTasks(updatedTasks);
+
+    if (!isSavedUser) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/tasks/${taskId}?userId=${user.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAuthMessage(data.message);
+      }
+    } catch {
+      setAuthMessage("Could not delete the task.");
+    }
   }
 
   const selectedDateTasks = tasks.filter((task) => {
@@ -243,6 +390,7 @@ function App() {
           <div>
             <h1>My Planner</h1>
             {user && <p>Signed in as {user.email}</p>}
+            {authMessage && <p className="auth-message">{authMessage}</p>}
           </div>
 
           <button type="button" onClick={handleSignOut}>
@@ -272,6 +420,7 @@ function App() {
                     task={task}
                     selectedDate={selectedDate}
                     onToggle={handleToggleTask}
+                    onEdit={handleEditTask}
                     onDelete={handleDeleteTask}
                   />
                 ))}
