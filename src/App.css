@@ -212,3 +212,7 @@ input:focus {
     grid-template-columns: 1fr;
   }
 }
+
+.task-list button {
+  margin-top: 8px;
+}

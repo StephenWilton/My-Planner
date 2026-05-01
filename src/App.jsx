@@ -1,4 +1,6 @@
 import { useState } from "react";
+import TaskForm from "./components/TaskForm";
+import TaskItem from "./components/TaskItem";
 import "./App.css";
 
 function App() {
@@ -45,6 +47,11 @@ function App() {
     setTasks(updatedTasks);
   }
 
+  function handleDeleteTask(taskId) {
+    const updatedTasks = tasks.filter((task) => task.id !== taskId);
+    setTasks(updatedTasks);
+  }
+
   const completedTasks = tasks.filter((task) => task.completed).length;
 
   if (screen === "dashboard") {
@@ -59,52 +66,25 @@ function App() {
         </header>
 
         <section className="dashboard-grid">
-          <section className="dashboard-card">
-            <h2>Add Task</h2>
-
-            <form className="task-form" onSubmit={handleAddTask}>
-              <label>
-                Task
-                <input
-                  type="text"
-                  placeholder="Example: Study SQL joins"
-                  value={taskText}
-                  onChange={(event) => setTaskText(event.target.value)}
-                />
-              </label>
-
-              <label>
-                Due Date
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(event) => setDueDate(event.target.value)}
-                />
-              </label>
-
-              <button type="submit">Add task</button>
-            </form>
-          </section>
+          <TaskForm
+            taskText={taskText}
+            setTaskText={setTaskText}
+            dueDate={dueDate}
+            setDueDate={setDueDate}
+            onAddTask={handleAddTask}
+          />
 
           <section className="dashboard-card">
             <h2>Tasks</h2>
 
             <ul className="task-list">
               {tasks.map((task) => (
-                <li key={task.id}>
-                  <label className="task-item">
-                    <input
-                      type="checkbox"
-                      checked={task.completed}
-                      onChange={() => handleToggleTask(task.id)}
-                    />
-                    <span className={task.completed ? "completed-task" : ""}>
-                      {task.text}
-                    </span>
-                  </label>
-
-                  {task.dueDate && <small>Due: {task.dueDate}</small>}
-                </li>
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  onToggle={handleToggleTask}
+                  onDelete={handleDeleteTask}
+                />
               ))}
             </ul>
           </section>
