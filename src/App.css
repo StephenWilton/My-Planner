@@ -22,7 +22,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -86,16 +87,19 @@ label {
   font-weight: 700;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 44px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 0 12px;
   color: var(--text);
+  background: #fff;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: var(--green);
   outline: 3px solid rgba(47, 111, 86, 0.16);
 }
@@ -258,9 +262,9 @@ input:focus {
   font-size: 1.45rem;
 }
 
-.selected-day {
-  border-color: var(--green);
-  background: #eef7f1;
+.calendar-day.selected-day {
+  outline: 3px solid var(--green);
+  outline-offset: 2px;
 }
 
 .outside-month {
@@ -270,6 +274,21 @@ input:focus {
 .outside-month strong,
 .outside-month small {
   color: #9aa3a0;
+}
+
+.calendar-day.day-incomplete {
+  border-color: #b42318;
+  background: #fee4e2;
+}
+
+.calendar-day.day-partial {
+  border-color: #b54708;
+  background: #fef0c7;
+}
+
+.calendar-day.day-complete {
+  border-color: #027a48;
+  background: #d1fadf;
 }
 
 .task-form {

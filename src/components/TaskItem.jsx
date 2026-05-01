@@ -1,19 +1,21 @@
-function TaskItem({ task, onToggle, onDelete }) {
+function TaskItem({ task, selectedDate, onToggle, onDelete }) {
+  const isComplete = task.completedDates.includes(selectedDate);
+
   return (
     <li>
       <label className="task-item">
         <input
           type="checkbox"
-          checked={task.completed}
-          onChange={() => onToggle(task.id)}
+          checked={isComplete}
+          onChange={() => onToggle(task.id, selectedDate)}
         />
 
-        <span className={task.completed ? "completed-task" : ""}>
+        <span className={isComplete ? "completed-task" : ""}>
           {task.text}
         </span>
       </label>
 
-      {task.dueDate && <small>Due: {task.dueDate}</small>}
+      {task.dueDate && <small>Started: {task.dueDate}</small>}
 
       <button type="button" onClick={() => onDelete(task.id)}>
         Delete

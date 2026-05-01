@@ -56,7 +56,54 @@ function getCalendarLabel(dateString) {
   };
 }
 
+function getDaysBetween(startDate, targetDate) {
+  const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
+  const [targetYear, targetMonth, targetDay] = targetDate.split("-").map(Number);
+  const start = new Date(startYear, startMonth - 1, startDay);
+  const target = new Date(targetYear, targetMonth - 1, targetDay);
+
+  return Math.floor((target - start) / (1000 * 60 * 60 * 24));
+}
+
+function taskOccursOnDate(task, date) {
+  if (task.repeatOption === "none") {
+    return task.dueDate === date;
+  }
+
+  const daysBetween = getDaysBetween(task.dueDate, date);
+
+  if (daysBetween < 0) {
+    return false;
+  }
+
+  if (task.repeatOption === "daily") {
+    return true;
+  }
+
+  if (task.repeatOption === "everyOtherDay") {
+    return daysBetween % 2 === 0;
+  }
+
+  if (task.repeatOption === "weekly") {
+    return daysBetween % 7 === 0;
+  }
+
+  if (task.repeatOption === "monthly") {
+    const startDay = task.dueDate.split("-")[2];
+    const targetDay = date.split("-")[2];
+
+    return startDay === targetDay;
+  }
+
+  return false;
+}
+
+function taskIsCompleteOnDate(task, date) {
+  return task.completedDates.includes(date);
+}
+
 function App() {
+  const [repeatOption, setRepeatOption] = useState("none");
   const todayDate = getTodayDate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(todayDate);
@@ -67,7 +114,8 @@ function App() {
       id: 1,
       text: "Create a List",
       dueDate: todayDate,
-      completed: false,
+      repeatOption: "none",
+      completedDates: [],
     },
   ]);
 
@@ -97,20 +145,29 @@ function App() {
       id: Date.now(),
       text: taskText.trim(),
       dueDate: selectedDate,
-      completed: false,
+      repeatOption,
+      completedDates: [],
     };
 
     setTasks([...tasks, newTask]);
     setTaskText("");
+    setRepeatOption("none");
   }
 
-  function handleToggleTask(taskId) {
+  function handleToggleTask(taskId, date) {
     const updatedTasks = tasks.map((task) => {
-      if (task.id === taskId) {
-        return { ...task, completed: !task.completed };
+      if (task.id !== taskId) {
+        return task;
       }
 
-      return task;
+      const isComplete = taskIsCompleteOnDate(task, date);
+
+      return {
+        ...task,
+        completedDates: isComplete
+          ? task.completedDates.filter((completedDate) => completedDate !== date)
+          : [...task.completedDates, date],
+      };
     });
 
     setTasks(updatedTasks);
@@ -121,10 +178,12 @@ function App() {
     setTasks(updatedTasks);
   }
 
-  const completedTasks = tasks.filter((task) => task.completed).length;
   const selectedDateTasks = tasks.filter((task) => {
-    return task.dueDate === selectedDate;
+    return taskOccursOnDate(task, selectedDate);
   });
+  const completedSelectedDateTasks = selectedDateTasks.filter((task) => {
+    return taskIsCompleteOnDate(task, selectedDate);
+  }).length;
 
   if (screen === "dashboard") {
     return (
@@ -141,6 +200,8 @@ function App() {
           <TaskForm
             taskText={taskText}
             setTaskText={setTaskText}
+            repeatOption={repeatOption}
+            setRepeatOption={setRepeatOption}
             onAddTask={handleAddTask}
             selectedDate={selectedDate}
           />
@@ -155,6 +216,7 @@ function App() {
                   <TaskItem
                     key={task.id}
                     task={task}
+                    selectedDate={selectedDate}
                     onToggle={handleToggleTask}
                     onDelete={handleDeleteTask}
                   />
@@ -167,7 +229,7 @@ function App() {
             <h2>Summary</h2>
             <p>{tasks.length} tasks</p>
             <p>{selectedDateTasks.length} on selected day</p>
-            <p>{completedTasks} completed</p>
+            <p>{completedSelectedDateTasks} completed on selected day</p>
           </aside>
 
           <section className="dashboard-card calendar-card">
@@ -197,14 +259,30 @@ function App() {
             <div className="calendar-grid">
               {calendarDates.map((calendarDay) => {
                 const label = getCalendarLabel(calendarDay.date);
-                const dayTasks = tasks.filter((task) => task.dueDate === calendarDay.date);
+                const dayTasks = tasks.filter((task) =>
+                  taskOccursOnDate(task, calendarDay.date)
+                );
                 const taskCount = dayTasks.length;
+                const completedCount = dayTasks.filter((task) =>
+                  taskIsCompleteOnDate(task, calendarDay.date)
+                ).length;
                 const firstTask = dayTasks[0];
+                const dayStatus =
+                  taskCount === 0
+                    ? ""
+                    : completedCount === 0
+                      ? "day-incomplete"
+                      : completedCount === taskCount
+                        ? "day-complete"
+                        : "day-partial";
                 const calendarDayClasses = [
                   "calendar-day",
                   calendarDay.date === selectedDate ? "selected-day" : "",
                   !calendarDay.isCurrentMonth ? "outside-month" : "",
-                ].join(" ");
+                  dayStatus,
+                ]
+                  .filter(Boolean)
+                  .join(" ");
 
                 return (
                   <button
