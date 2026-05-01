@@ -108,6 +108,10 @@ function App() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(todayDate);
   const [screen, setScreen] = useState("login");
+  const [user, setUser] = useState(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
   const [taskText, setTaskText] = useState("");
   const [tasks, setTasks] = useState([
     {
@@ -132,6 +136,53 @@ function App() {
     setCurrentMonth(
       new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
     );
+  }
+
+  async function sendAuthRequest(path) {
+    setAuthMessage("");
+
+    try {
+      const response = await fetch(`http://localhost:4000${path}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAuthMessage(data.message);
+        return;
+      }
+
+      setUser(data.user);
+      setAuthMessage(data.message);
+      setScreen("dashboard");
+    } catch {
+      setAuthMessage("Could not connect to the server.");
+    }
+  }
+
+  function handleLogin(event) {
+    event.preventDefault();
+    sendAuthRequest("/api/login");
+  }
+
+  function handleRegister() {
+    sendAuthRequest("/api/register");
+  }
+
+  function handleGuestLogin() {
+    setUser({ id: "guest", email: "Guest" });
+    setAuthMessage("");
+    setScreen("dashboard");
+  }
+
+  function handleSignOut() {
+    setUser(null);
+    setPassword("");
+    setScreen("login");
   }
 
   function handleAddTask(event) {
@@ -189,9 +240,12 @@ function App() {
     return (
       <main className="dashboard-page">
         <header className="dashboard-header">
-          <h1>My Planner</h1>
+          <div>
+            <h1>My Planner</h1>
+            {user && <p>Signed in as {user.email}</p>}
+          </div>
 
-          <button type="button" onClick={() => setScreen("login")}>
+          <button type="button" onClick={handleSignOut}>
             Sign out
           </button>
         </header>
@@ -322,24 +376,43 @@ function App() {
         <h1>Welcome back</h1>
         <p className="intro">Sign in or continue as a guest to start planning.</p>
 
-        <form className="login-form">
+        <form className="login-form" onSubmit={handleLogin}>
           <label>
             Email
-            <input type="email" placeholder="name@example.com" />
+            <input
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
           </label>
 
           <label>
             Password
-            <input type="password" placeholder="Your password" />
+            <input
+              type="password"
+              placeholder="Your password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
           </label>
 
           <button
             className="primary-button"
-            type="button"
-            onClick={() => setScreen("dashboard")}
+            type="submit"
           >
             Sign in
           </button>
+
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={handleRegister}
+          >
+            Create account
+          </button>
+
+          {authMessage && <p className="auth-message">{authMessage}</p>}
         </form>
 
         <div className="divider">
@@ -349,7 +422,7 @@ function App() {
         <button
           className="secondary-button"
           type="button"
-          onClick={() => setScreen("dashboard")}
+          onClick={handleGuestLogin}
         >
           Enter as guest
         </button>
